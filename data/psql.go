@@ -1,0 +1,52 @@
+package data
+
+const (
+	PsqlSerial          = "SERIAL"              // auto-incrementing four-byte integer
+	PsqlSmallSerial     = "SMALLSERIAL"         // auto-incrementing two-byte integer
+	PsqlBigSerial       = "BIGSERIAL"           // auto-incrementing eight-byte integer
+	PsqlBigInt          = "BIGINT"              // No length or precision specifiers
+	PsqlInt             = "INTEGER"             // No length or precision specifiers
+	PsqlSmallInt        = "SMALLINT"            // No length or precision specifiers
+	PsqlBoolean         = "BOOLEAN"             // No length or precision specifiers
+	PsqlChar            = "CHAR(%d)"            // Length specifier
+	PsqlVarChar         = "VARCHAR(%d)"         // Length specifier
+	PsqlText            = "TEXT"                // No length or precision specifiers
+	PsqlReal            = "REAL"                // No length or precision specifiers
+	PsqlDoublePrecision = "DOUBLE PRECISION"    // No length or precision specifiers
+	PsqlNumeric         = "NUMERIC(%d, %d)"     // Precision and Scale specifiers
+	PsqlMoney           = "MONEY"               // No length or precision specifiers
+	PsqlTimestamp       = "TIMESTAMP"           // No length or precision specifiers
+	PsqlTimestampTz     = "TIMESTAMPTZ"         // No length or precision specifiers
+	PsqlDate            = "DATE"                // No length or precision specifiers
+	PsqlTime            = "TIME"                // No length or precision specifiers
+	PsqlTimeTz          = "TIME WITH TIME ZONE" // No length or precision specifiers
+	PsqlInterval        = "INTERVAL"            // No length or precision specifiers
+	PsqlBytea           = "BYTEA"               // No length or precision specifiers
+	PsqlBit             = "BIT(%d)"             // Length specifier
+	PsqlVarBit          = "VARBIT(%d)"          // Length specifier
+	PsqlUuid            = "UUID"                // No length or precision specifiers
+	PsqlArray           = "ARRAY"               // No length or precision specifiers
+	PsqlJson            = "JSON"                // No length or precision specifiers
+	PsqlJsonB           = "JSONB"               // No length or precision specifiers
+	PsqlXml             = "XML"                 // No length or precision specifiers
+	PsqlPoint           = "POINT"               // No length or precision specifiers
+	PsqlLine            = "LINE"                // No length or precision specifiers
+	PsqlLseg            = "LSEG"                // No length or precision specifiers
+	PsqlBox             = "BOX"                 // No length or precision specifiers
+	PsqlPath            = "PATH"                // No length or precision specifiers
+	PsqlPolygon         = "POLYGON"             // No length or precision specifiers
+	PsqlCircle          = "CIRCLE"              // No length or precision specifiers
+	PsqlCidr            = "CIDR"                // No length or precision specifiers
+	PsqlInet            = "INET"                // No length or precision specifiers
+	PsqlMacAddr         = "MACADDR"             // No length or precision specifiers
+	PsqlTsVector        = "TSVECTOR"            // No length or precision specifiers
+	PsqlTsQuery         = "TSQUERY"             // No length or precision specifiers
+	PsqlTxidSnapshot    = "TXID_SNAPSHOT"       // No length or precision specifiers
+	PsqlInt4Range       = "INT4RANGE"           // No length or precision specifiers
+	PsqlInt8Range       = "INT8RANGE"           // No length or precision specifiers
+	PsqlNumRange        = "NUMRANGE"            // No length or precision specifiers
+	PsqlTsRange         = "TSRANGE"             // No length or precision specifiers
+	PsqlTstzRange       = "TSTZRANGE"           // No length or precision specifiers
+	PsqlDateRange       = "DATERANGE"           // No length or precision specifiers
+	PsqlMacAddr8        = "MACADDR8"            // No length or precision specifiers
+)
