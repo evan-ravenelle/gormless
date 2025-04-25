@@ -6,11 +6,11 @@ import (
 	"log"
 )
 
-type Db struct {
+type Session struct {
 	*sql.DB
 }
 
-func DbSession(dsn string) (*Db, error) {
+func GetDbSession(dsn string) (*Session, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
@@ -21,14 +21,15 @@ func DbSession(dsn string) (*Db, error) {
 		return nil, err
 	}
 
-	return &Db{db}, nil
+	session := &Session{db}
+	return session, nil
 }
 
-func InitDatabaseVersion() error {
+func InitDatabaseVersion(session Session) error {
 	dbVersionType := fmt.Sprintf(PsqlChar, 32)
 	versionDateType := PsqlTimestamp
 
-	db, err := DbSession("user=evanravenelle dbname=gotest sslmode=disable")
+	err := session.DB.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,7 +41,8 @@ func InitDatabaseVersion() error {
 			{Name: "version_date", Type: &versionDateType},
 		},
 	}
-	err = CreateTable(*db, dbVersionTable)
+
+	err = CreateTable(session, dbVersionTable)
 	if err != nil {
 		return fmt.Errorf("Failed to create User table: %v", err)
 	}

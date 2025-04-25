@@ -31,7 +31,7 @@ type Table struct {
 	Migrations *[]Migration
 }
 
-func CreateTable(db Db, table Table) error {
+func CreateTable(session Session, table Table) error {
 	var stmt strings.Builder
 	countPrimaryKey := 0
 	fmt.Fprintf(&stmt, "CREATE TABLE IF NOT EXISTS \"%s\" (", table.Name)
@@ -59,7 +59,7 @@ func CreateTable(db Db, table Table) error {
 	fmt.Fprintf(&stmt, ");")
 	fmt.Println(stmt.String())
 
-	statement, err := db.Prepare(stmt.String())
+	statement, err := session.DB.Prepare(stmt.String())
 	if err != nil {
 		log.Fatal(err)
 	}

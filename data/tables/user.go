@@ -6,7 +6,7 @@ import (
 	data "main/data"
 )
 
-func InitUserTable() error {
+func InitUserTable(session data.Session) error {
 
 	userIdType := data.PsqlSerial
 	userFirstType := fmt.Sprintf(data.PsqlVarChar, 32)
@@ -14,7 +14,7 @@ func InitUserTable() error {
 	userEmailType := fmt.Sprintf(data.PsqlVarChar, 64)
 	roleIdType := data.PsqlInt
 
-	db, err := data.DbSession("user=evanravenelle dbname=gotest sslmode=disable")
+	err := session.DB.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func InitUserTable() error {
 			{Name: "user_role", Type: &roleIdType, ForeignKey: &userRoleFk},
 		},
 	}
-	err = data.CreateTable(*db, userTable)
+	err = data.CreateTable(session, userTable)
 	if err != nil {
 		return fmt.Errorf("Failed to create User table: %v", err)
 	}

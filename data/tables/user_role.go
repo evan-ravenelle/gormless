@@ -6,11 +6,11 @@ import (
 	"main/data"
 )
 
-func InitUserRoleTable() error {
+func InitUserRoleTable(session data.Session) error {
 	roleIdType := data.PsqlSmallSerial
 	roleNameType := fmt.Sprintf(data.PsqlVarChar, 32)
 
-	db, err := data.DbSession("user=evanravenelle dbname=gotest sslmode=disable")
+	err := session.DB.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func InitUserRoleTable() error {
 			{Name: "role_name", Type: &roleNameType},
 		},
 	}
-	err = data.CreateTable(*db, userRoleTable)
+	err = data.CreateTable(session, userRoleTable)
 	if err != nil {
 		return fmt.Errorf("Failed to create User table: %v", err)
 	}
