@@ -9,7 +9,15 @@ import (
 	"strings"
 )
 
-type Migration func(table Table, session ISession) error
+type TableDef func() Table
+
+type TableInitializer func(tableDef TableDef) error
+
+type Table struct {
+	Name       string
+	Columns    *[]Column
+	Migrations *[]Migration
+}
 
 type ForeignKey struct {
 	Table  *Table
@@ -24,13 +32,10 @@ type Column struct {
 	Indexed    bool
 	PrimaryKey bool
 	ForeignKey *ForeignKey
+	Value      *any
 }
 
-type Table struct {
-	Name       string
-	Columns    *[]Column
-	Migrations *[]Migration
-}
+type Migration func(table Table, session ISession) error
 
 func CreateTable(session ISession, table Table) error {
 	var stmt strings.Builder

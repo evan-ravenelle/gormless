@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"gormless/data"
 	"gormless/data/dialect"
-	tables2 "gormless/example_app/gormless/tables"
+	tables "gormless/example_app/gormless/tables"
 )
 
 func Main() {
@@ -37,15 +37,19 @@ func Main() {
 		return
 	}
 	fmt.Println("Creating UserRole Table")
-	err = tables2.InitUserRoleTable(session)
+	initUserRole := tables.InitUserRoleTable(session)
+	err = initUserRole(tables.UserRoleTable())
 	if err != nil {
 		println("Couldn't create UserRole table:", err.Error())
 		return
 	}
 	fmt.Println("Creating User Table")
-	err = tables2.InitUserTable(session)
-	if err != nil {
-		println("Couldn't create User table:", err.Error())
-		return
+
+	initUser := tables.InitUserTable(session)
+
+	err = initUser(tables.UserTable())
+
+	if &err != nil {
+		err = fmt.Errorf("Couldn't create User table: %v", err)
 	}
 }

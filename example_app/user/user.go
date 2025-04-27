@@ -3,6 +3,7 @@ package user
 import (
 	"fmt"
 	"gormless/data"
+	"gormless/example_app/gormless/tables"
 )
 
 type UserRole struct {
@@ -24,18 +25,19 @@ type User struct {
 	Role      string
 }
 
-func (u *User) GetDAO(session data.ISession) *data.DAO[User] {
+func (u *User) GetDAO(session data.ISession) {
 	dao := data.DAO[User]{
 		ISession: session,
 		Table:    data.Table{Name: "user"},
 	}
-	return &dao
+	u.dao = &dao
 }
 
 func (u *UserRole) GetDAO(session *data.Session) *data.DAO[User] {
+	tableDef := tables.UserTable()
 	dao := data.DAO[User]{
 		ISession: session,
-		Table:    data.Table{Name: "user_role"},
+		Table:    tableDef(),
 	}
 	return &dao
 }
@@ -68,5 +70,12 @@ func NewUser(session data.ISession, user_email string, user_first string, user_l
 	}
 
 	user.GetDAO(session)
+	user.dao.Table.Columns = &[]data.Column{
+		{Name: "user_first", Type: &user.FirstName},
+		{Name: "user_last", Type: &user.LastName},
+		{Name: "user_email", Type: &user.Email, Indexed: true},
+		{Name: "user_role", Type: &user.Role},
+	}
+
 	return user, nil
 }

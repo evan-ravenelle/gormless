@@ -29,7 +29,8 @@ func TestInitUserTable(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	// Call the function being tested
-	err = InitUserTable(session)
+	initialize := InitUserTable(session)
+	err = initialize(UserTable())
 
 	// Assert results
 	assert.NoError(t, err)
@@ -59,8 +60,8 @@ func TestInitUserRoleTable(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	// Call the function being tested
-	err = InitUserRoleTable(session)
-
+	initUserRole := InitUserRoleTable(session)
+	err = initUserRole(UserRoleTable())
 	// Assert results
 	assert.NoError(t, err)
 
@@ -89,11 +90,14 @@ func _TestUserTableIntegration(t *testing.T) {
 	defer session.Close()
 
 	// Create the user_role table first (since user table depends on it)
-	err = InitUserRoleTable(session)
+	initializeUserRole := InitUserRoleTable(session)
+	err = initializeUserRole(UserRoleTable())
 	assert.NoError(t, err)
 
 	// Then create the user table
-	err = InitUserTable(session)
+	initializeUser := InitUserTable(session)
+	err = initializeUser(UserTable())
+
 	assert.NoError(t, err)
 
 	// Verify the tables exist by querying the information schema
