@@ -1,6 +1,6 @@
 # gormless: A Type-Safe Database Schema Manager for Go
 
-gormless is a lightweight, yet powerful database schema management tool for Go applications. Unlike traditional ORMs, GORMLESS embraces SQL and provides a thin layer of abstraction to work with your database schema in a type-safe manner.
+gormless is a lightweight database schema management tool for Go applications. Unlike traditional ORMs, gormless embraces SQL and provides a thin layer of abstraction to work with your database schema in a type-safe manner.
 
 ## Philosophy
 
@@ -213,7 +213,7 @@ func CreateTablesWithRelationship(session data.ISession) error {
 
 ## Dialect Support
 
-GORMLESS supports multiple SQL dialects through its dialect package. Currently supported dialects are:
+gormless supports multiple SQL dialects through its dialect package. Currently supported dialects are:
 
 - PostgreSQL
 - MySQL
@@ -222,7 +222,7 @@ Each dialect implements the `Dialect` interface which provides methods for gener
 
 ## Testing
 
-GORMLESS includes comprehensive unit tests and integration tests. To run the tests:
+gormless includes unit tests and integration tests. To run the tests:
 
 ```bash
 # Run all tests
