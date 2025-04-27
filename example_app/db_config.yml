@@ -1,0 +1,12 @@
+
+database:
+  host: localhost
+  port: 5432
+  username: evan
+  password: your_secure_password
+  dbname: gotest
+  sslmode: disable
+  role: evan
+  connection_timeout: 30
+  idle_timeout: 10
+  max_connections: 20

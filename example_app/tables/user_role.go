@@ -2,15 +2,16 @@ package tables
 
 import (
 	"fmt"
+	"gormless/data"
+	"gormless/data/dialect"
 	"log"
-	"main/data"
 )
 
-func InitUserRoleTable(session data.Session) error {
-	roleIdType := data.PsqlSmallSerial
-	roleNameType := fmt.Sprintf(data.PsqlVarChar, 32)
+func InitUserRoleTable(session data.ISession) error {
+	roleIdType := dialect.PsqlSmallSerial
+	roleNameType := fmt.Sprintf(dialect.PsqlVarChar, 32)
 
-	err := session.DB.Ping()
+	err := session.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,8 +25,8 @@ func InitUserRoleTable(session data.Session) error {
 	}
 	err = data.CreateTable(session, userRoleTable)
 	if err != nil {
-		return fmt.Errorf("Failed to create User table: %v", err)
+		return fmt.Errorf("Failed to create user_role table: %v", err)
 	}
-
+	
 	return err
 }

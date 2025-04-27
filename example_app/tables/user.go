@@ -2,19 +2,20 @@ package tables
 
 import (
 	"fmt"
+	data "gormless/data"
+	"gormless/data/dialect"
 	"log"
-	data "main/data"
 )
 
-func InitUserTable(session data.Session) error {
+func InitUserTable(session data.ISession) error {
 
-	userIdType := data.PsqlSerial
-	userFirstType := fmt.Sprintf(data.PsqlVarChar, 32)
-	userLastType := fmt.Sprintf(data.PsqlVarChar, 32)
-	userEmailType := fmt.Sprintf(data.PsqlVarChar, 64)
-	roleIdType := data.PsqlInt
+	userIdType := dialect.PsqlSerial
+	userFirstType := fmt.Sprintf(dialect.PsqlVarChar, 32)
+	userLastType := fmt.Sprintf(dialect.PsqlVarChar, 32)
+	userEmailType := fmt.Sprintf(dialect.PsqlVarChar, 64)
+	roleIdType := dialect.PsqlInt
 
-	err := session.DB.Ping()
+	err := session.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}

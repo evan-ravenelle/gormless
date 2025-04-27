@@ -1,14 +1,15 @@
 package data
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/lib/pq"
+	"gormless/data/sqlsafe"
 	"log"
 	"strings"
 )
 
-type Migration func(table Table, db *sql.DB) error
+type Migration func(table Table, session ISession) error
 
 type ForeignKey struct {
 	Table  *Table
@@ -31,35 +32,42 @@ type Table struct {
 	Migrations *[]Migration
 }
 
-func CreateTable(session Session, table Table) error {
+func CreateTable(session ISession, table Table) error {
 	var stmt strings.Builder
+	dialect := session.Dialect()
 	countPrimaryKey := 0
-	fmt.Fprintf(&stmt, "CREATE TABLE IF NOT EXISTS \"%s\" (", table.Name)
+	_, err := dialect.Fprintd(&stmt, "CREATE TABLE IF NOT EXISTS %i (", table.Name)
+	if err != nil {
+		return err
+	}
 	for i, column := range *table.Columns {
 		if column.PrimaryKey {
 			countPrimaryKey++
 			if countPrimaryKey > 1 {
-				return fmt.Errorf("multiple primary keys defined in table: %s", table.Name)
+				return errors.New(fmt.Sprintf("multiple primary keys defined in table: %s", table.Name))
 			}
-			if !isSafeSQLIdentifier(column.Name) || !isSafeSQLIdentifier(*column.Type) {
-				return fmt.Errorf("invalid SQL identifier found")
+			if !sqlsafe.IsSafeSQLString(column.Name) || !sqlsafe.IsSafeSQLString(*column.Type) {
+				return errors.New("invalid SQL identifier found")
 			}
 		}
-		fmt.Fprintf(&stmt, "\"%s\" %s", column.Name, *column.Type)
+		dialect.Fprintd(&stmt, "%i %s", column.Name, *column.Type)
 		if column.PrimaryKey {
-			fmt.Fprintf(&stmt, " PRIMARY KEY")
+			dialect.Fprintd(&stmt, " PRIMARY KEY")
 		}
 		if column.ForeignKey != nil {
-			fmt.Fprintf(&stmt, ", FOREIGN KEY (\"%s\") REFERENCES \"%s\"(\"%s\")", column.Name, column.ForeignKey.Table.Name, column.ForeignKey.Column.Name)
+			dialect.Fprintd(&stmt, ", FOREIGN KEY (%i) REFERENCES %i(%i)", column.Name, column.ForeignKey.Table.Name, column.ForeignKey.Column.Name)
 		}
 		if i != len(*table.Columns)-1 {
-			fmt.Fprintf(&stmt, ", ")
+			dialect.Fprintd(&stmt, ", ")
 		}
 	}
-	fmt.Fprintf(&stmt, ");")
+	dialect.Fprintd(&stmt, ");")
 	fmt.Println(stmt.String())
+	if !sqlsafe.IsSafeSQLString(stmt.String()) {
+		return errors.New("invalid SQL identifier found")
+	}
+	statement, err := session.Prepare(stmt.String())
 
-	statement, err := session.DB.Prepare(stmt.String())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -71,10 +79,11 @@ func CreateTable(session Session, table Table) error {
 }
 
 func AddColumn(table Table, column Column) Migration {
-	return func(table Table, db *sql.DB) error {
+	return func(table Table, db ISession) error {
+		dialect := db.Dialect()
 		// Start by adding the column with its type
-		query := fmt.Sprintf(
-			"ALTER TABLE %s ADD COLUMN %s %s",
+		query := dialect.Sprintd(
+			"ALTER TABLE %i ADD COLUMN %i %s",
 			table.Name,
 			column.Name,
 			*column.Type)
@@ -85,7 +94,7 @@ func AddColumn(table Table, column Column) Migration {
 
 		// Create an index if necessary
 		if column.Indexed {
-			query = fmt.Sprintf("CREATE INDEX idx_%s_on_%s ON %s (%s)", table.Name, column.Name, table.Name, column.Name)
+			query = dialect.Sprintd("CREATE INDEX idx_%i_on_%i ON %i (%i)", table.Name, column.Name, table.Name, column.Name)
 			_, err := db.Exec(query)
 			if err != nil {
 				return fmt.Errorf("creating index: %w", err)
@@ -93,11 +102,11 @@ func AddColumn(table Table, column Column) Migration {
 		}
 
 		// Set as primary key if necessary
-		query = fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", table.Name, column.Name, column.Type)
+		query = "ALTER TABLE %i ADD COLUMN %i %i"
 		if column.PrimaryKey {
-			query = fmt.Sprintf("ALTER TABLE %s ADD PRIMARY KEY (%s)", table.Name, column.Name)
+			query = "ALTER TABLE %i ADD PRIMARY KEY (%i)"
 		}
-		_, err = db.Exec(query)
+		_, err = db.Exec(dialect.Sprintd(query, table.Name, column.Name, *column.Type))
 		if err != nil {
 			return fmt.Errorf("setting primary key: %w", err)
 		}
@@ -106,8 +115,8 @@ func AddColumn(table Table, column Column) Migration {
 		if column.ForeignKey != nil {
 			fk := column.ForeignKey
 			if fk.Table.Name != "" && fk.Column.Name != "" {
-				query = fmt.Sprintf(
-					"ALTER TABLE %s ADD FOREIGN KEY (%s) REFERENCES %s (%s)",
+				query = dialect.Sprintd(
+					"ALTER TABLE %i ADD FOREIGN KEY (%i) REFERENCES %i (%i)",
 					table.Name,
 					column.Name,
 					fk.Table.Name,
@@ -125,9 +134,10 @@ func AddColumn(table Table, column Column) Migration {
 }
 
 func RemoveColumn(column Column) Migration {
-	return func(table Table, db *sql.DB) error {
+	return func(table Table, db ISession) error {
+		dialect := db.Dialect()
 		_, err := db.Exec(
-			"ALTER TABLE %s DROP COLUMN %s",
+			dialect.Sprintd("ALTER TABLE %i DROP COLUMN %i"),
 			table.Name,
 			column.Name)
 		if err != nil {
@@ -140,7 +150,8 @@ func RemoveColumn(column Column) Migration {
 }
 
 func ModifyColumn(table Table, oldColumn Column, newColumn Column) Migration {
-	return func(table Table, db *sql.DB) error {
+	return func(table Table, db ISession) error {
+		dialect := db.Dialect()
 		// Put rename and type change SQL commands in a transaction.
 		tx, err := db.Begin()
 		if err != nil {
@@ -148,10 +159,13 @@ func ModifyColumn(table Table, oldColumn Column, newColumn Column) Migration {
 		}
 		defer tx.Rollback()
 
+		alterTableColumnName := "\"ALTER TABLE %i RENAME COLUMN %i TO %i\""
+		alterTableColumnType := "\"ALTER TABLE %i ALTER COLUMN %i TYPE %s\""
+
 		if newColumn.Name != "" {
 			_, err = tx.Exec(
-				fmt.Sprintf(
-					"ALTER TABLE %s RENAME COLUMN %s TO %s",
+				dialect.Sprintd(
+					alterTableColumnName,
 					table.Name,
 					oldColumn.Name,
 					newColumn.Name,
@@ -163,7 +177,7 @@ func ModifyColumn(table Table, oldColumn Column, newColumn Column) Migration {
 		}
 		if newColumn.Type != nil {
 			_, err = tx.Exec(
-				fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s TYPE %s", table.Name, newColumn.Name, *newColumn.Type),
+				dialect.Sprintd(alterTableColumnType, table.Name, newColumn.Name, *newColumn.Type),
 			)
 			if err != nil {
 				return fmt.Errorf("modifying column type: %w", err)
@@ -177,11 +191,4 @@ func ModifyColumn(table Table, oldColumn Column, newColumn Column) Migration {
 
 		return nil
 	}
-}
-
-func isSafeSQLIdentifier(name string) bool {
-	// Check if name is non-empty and contains only alphanumeric characters or underscores
-	// This is simplistic and might not cover all valid cases depending on the SQL dialect and naming conventions
-	isSafe := name != "" && !strings.ContainsAny(name, "';--")
-	return isSafe
 }

@@ -1,35 +1,16 @@
 package data
 
 import (
-	"database/sql"
 	"fmt"
+	"gormless/data/dialect"
 	"log"
 )
 
-type Session struct {
-	*sql.DB
-}
+func InitDatabaseVersion(session ISession) error {
+	dbVersionType := fmt.Sprintf(dialect.PsqlChar, 32)
+	versionDateType := dialect.PsqlTimestamp
 
-func GetDbSession(dsn string) (*Session, error) {
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-
-	session := &Session{db}
-	return session, nil
-}
-
-func InitDatabaseVersion(session Session) error {
-	dbVersionType := fmt.Sprintf(PsqlChar, 32)
-	versionDateType := PsqlTimestamp
-
-	err := session.DB.Ping()
+	err := session.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
