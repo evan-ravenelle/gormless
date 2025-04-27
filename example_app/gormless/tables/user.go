@@ -3,7 +3,8 @@ package tables
 import (
 	"fmt"
 	data "gormless/data"
-	"gormless/data/dialect"
+	dialect "gormless/data/dialect"
+
 	"log"
 )
 

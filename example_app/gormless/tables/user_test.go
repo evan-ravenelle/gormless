@@ -71,7 +71,7 @@ func TestInitUserRoleTable(t *testing.T) {
 
 // TestUserTableIntegration is an integration test that requires a real database
 // This test is disabled by default (remove the leading underscore to enable)
-func TestUserTableIntegration(t *testing.T) {
+func _TestUserTableIntegration(t *testing.T) {
 	// Skip this test in normal test runs
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
