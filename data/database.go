@@ -2,13 +2,12 @@ package data
 
 import (
 	"fmt"
-	"gormless/data/dialect"
 	"log"
 )
 
 func InitDatabaseVersion(session ISession) error {
-	dbVersionType := fmt.Sprintf(dialect.PsqlChar, 32)
-	versionDateType := dialect.PsqlTimestamp
+	dbVersionType := session.Dialect().Char(32)
+	versionDateType := session.Dialect().Timestamp()
 
 	err := session.Ping()
 	if err != nil {
@@ -25,12 +24,13 @@ func InitDatabaseVersion(session ISession) error {
 
 	err = CreateTable(session, dbVersionTable)
 	if err != nil {
-		return fmt.Errorf("Failed to create User table: %v", err)
+		return fmt.Errorf("failed to create database_version table: %v", err)
 	}
 
 	return err
 }
 
 func UpsertDbVersion() error {
-	return fmt.Errorf("error")
+
+	return fmt.Errorf("Not implemented")
 }
