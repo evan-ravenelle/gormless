@@ -28,13 +28,35 @@ func InitUserRoleTable(session data.ISession) data.TableInitializer {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return func(def data.TableDef) error {
+		// Create the table structure
 		userRoleTable := UserRoleTable()
-		err = data.CreateTable(session, userRoleTable())
+		table := userRoleTable()
+		err = data.CreateTable(session, table)
 		if err != nil {
 			return fmt.Errorf("Failed to create user_role table: %v", err)
 		}
-		return err
-	}
 
+		// Create a generic DAO for inserting default values
+		dao := data.DAO[any]{
+			ISession: session,
+			Table:    table,
+		}
+
+		// Prepare batch data for default roles
+		defaultRoles := []map[string]interface{}{
+			{"role_name": "admin"},
+			{"role_name": "user"},
+			{"role_name": "guest"},
+		}
+
+		// Insert all default roles at once
+		err = dao.Upsert(defaultRoles...)
+		if err != nil {
+			return fmt.Errorf("Failed to insert default roles: %v", err)
+		}
+
+		return nil
+	}
 }

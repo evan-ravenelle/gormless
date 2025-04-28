@@ -38,12 +38,16 @@ func UserTable() data.TableDef {
 	}
 }
 func InitUserTable(session data.ISession) data.TableInitializer {
-
-	err := session.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Uses the session from the outer scope function to create the table.
+	// You can also create a new session here if you want to use a different database connection;
+	// Though gormless provides a session interface, the outer scope function need not inject an ISession; so you can choose
+	// how you want to connect to the database -- see example below
 	return func(def data.TableDef) error {
+		err := session.Ping()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		userTable := UserTable()
 		err = data.CreateTable(session, userTable())
 		if err != nil {
@@ -52,3 +56,21 @@ func InitUserTable(session data.ISession) data.TableInitializer {
 		return err
 	}
 }
+
+/*
+func InitUserTableWithNewSession(dsn) data.TableInitializer {
+	session, err := data.GetDbSession()
+	return func(def data.TableDef) error {
+		err := session.Ping()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		userTable := UserTable()
+		err = data.CreateTable(session, userTable())
+		if err != nil {
+			return fmt.Errorf("Failed to create User table: %v", err)
+		}
+		return err
+	}
+}*/

@@ -10,6 +10,7 @@ import (
 type ISession interface {
 	Prepare(query string) (*sql.Stmt, error)
 	Exec(query string, args ...interface{}) (sql.Result, error)
+	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
 	Close() error
 	Begin() (*sql.Tx, error)
@@ -32,6 +33,9 @@ func (s *Session) Prepare(query string) (*sql.Stmt, error) {
 
 func (s *Session) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return s.DB.Exec(query, args...)
+}
+func (s *Session) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	return s.DB.Query(query, args)
 }
 
 func (s *Session) QueryRow(query string, args ...interface{}) *sql.Row {

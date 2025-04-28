@@ -32,7 +32,7 @@ type Column struct {
 	Indexed    bool
 	PrimaryKey bool
 	ForeignKey *ForeignKey
-	Value      *any
+	Value      *string
 }
 
 type Migration func(table Table, session ISession) error

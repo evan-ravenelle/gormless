@@ -2,54 +2,31 @@ package example_app
 
 import (
 	"fmt"
-	"gormless/data"
-	"gormless/data/dialect"
-	tables "gormless/example_app/gormless/tables"
+	gl "gormless/example_app/gormless"
+	"gormless/example_app/user"
+	"time"
 )
 
 func Main() {
-	conf, err := data.LoadConfig("example_app/db_config.yml")
+	go gl.InitializeDatabaseTables()
+	session, err := gl.GetSession()
 	if err != nil {
 		panic(err)
 	}
-	dsn := fmt.Sprintf(
-		"user=%s dbname=%s sslmode=%s",
-		conf.Database.Username,
-		conf.Database.DBName,
-		conf.Database.SSLMode)
-
-	fmt.Println(dsn)
-	session, err := data.GetDbSession(dsn, dialect.POSTGRES)
+	defer func() {
+		err = session.Close()
+	}()
 	if err != nil {
-		panic(err)
+		panic("Couldn't get DB session: " + err.Error())
 	}
-
-	defer func(session *data.Session) {
-		err := session.Close()
-		if err != nil {
-
-		}
-	}(session)
-
-	err = data.InitDatabaseVersion(session)
+	println(fmt.Sprintf("Hello World %s", time.Now()))
+	newUser, err := user.NewUser(session, "john@example.com", "John", "Doe", user.UserRole{RoleName: user.RoleAdmin})
 	if err != nil {
-		println("Couldn't init DB:", err.Error())
 		return
 	}
-	fmt.Println("Creating UserRole Table")
-	initUserRole := tables.InitUserRoleTable(session)
-	err = initUserRole(tables.UserRoleTable())
-	if err != nil {
-		println("Couldn't create UserRole table:", err.Error())
-		return
-	}
-	fmt.Println("Creating User Table")
-
-	initUser := tables.InitUserTable(session)
-
-	err = initUser(tables.UserTable())
-
-	if &err != nil {
-		err = fmt.Errorf("Couldn't create User table: %v", err)
+	println(fmt.Sprintf("Hello World %s", newUser.Email))
+	for {
+		println(fmt.Sprintf("Hello World %s", time.Now()))
+		time.Sleep(5 * time.Minute)
 	}
 }

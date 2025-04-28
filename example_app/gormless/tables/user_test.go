@@ -50,18 +50,27 @@ func TestInitUserRoleTable(t *testing.T) {
 
 	session := &data.Session{DB: db}
 	session.SQLDialect = dialect.PostgresDialect{}
+
 	// Set expectations for the database operations
 	mock.ExpectPing()
 
-	expectedSQL := regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS \"user_role\" (\"role_id\" SMALLSERIAL PRIMARY KEY, \"role_name\" VARCHAR(32));")
-	// We'll check that the SQL query for creating the user_role table is executed
-	mock.ExpectPrepare(expectedSQL).
+	// Expect the CREATE TABLE statement
+	expectedCreateSQL := regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS \"user_role\" (\"role_id\" SMALLSERIAL PRIMARY KEY, \"role_name\" VARCHAR(32));")
+	mock.ExpectPrepare(expectedCreateSQL).
 		ExpectExec().
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
+	// Expect the INSERT statement with multiple rows
+	mock.ExpectExec(regexp.QuoteMeta(
+		"INSERT INTO \"user_role\" (\"role_name\") VALUES ($1), ($2), ($3) ON CONFLICT (\"role_id\") DO UPDATE SET \"role_name\" = EXCLUDED.\"role_name\"")).
+		WithArgs("admin", "user", "guest").
+		WillReturnResult(sqlmock.NewResult(3, 3))
+
 	// Call the function being tested
-	initUserRole := InitUserRoleTable(session)
-	err = initUserRole(UserRoleTable())
+	initializer := InitUserRoleTable(session)
+	tableDefFunc := UserRoleTable()
+	err = initializer(tableDefFunc)
+
 	// Assert results
 	assert.NoError(t, err)
 

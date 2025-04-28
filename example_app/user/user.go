@@ -33,7 +33,36 @@ func (u *User) GetDAO(session data.ISession) {
 	u.dao = &dao
 }
 
-func (u *UserRole) GetDAO(session *data.Session) *data.DAO[User] {
+func InsertUserRoles(session data.ISession) error {
+	adminRole := UserRole{
+		RoleName: RoleAdmin,
+	}
+	userRole := UserRole{
+		RoleName: RoleUser,
+	}
+	guestRole := UserRole{
+		RoleName: RoleGuest,
+	}
+
+	adminDAO := adminRole.GetDAO(session)
+	err := adminDAO.Upsert()
+	if err != nil {
+		return err
+	}
+	userDAO := userRole.GetDAO(session)
+	err = userDAO.Upsert()
+	if err != nil {
+		return err
+	}
+	guestDAO := guestRole.GetDAO(session)
+	err = guestDAO.Upsert()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UserRole) GetDAO(session data.ISession) *data.DAO[User] {
 	tableDef := tables.UserTable()
 	dao := data.DAO[User]{
 		ISession: session,
@@ -75,6 +104,10 @@ func NewUser(session data.ISession, user_email string, user_first string, user_l
 		{Name: "user_last", Type: &user.LastName},
 		{Name: "user_email", Type: &user.Email, Indexed: true},
 		{Name: "user_role", Type: &user.Role},
+	}
+	err := user.dao.Upsert()
+	if err != nil {
+		return nil, err
 	}
 
 	return user, nil

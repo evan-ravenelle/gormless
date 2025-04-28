@@ -6,8 +6,6 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello Woyld")
-	fmt.Println("Initializing Database...")
+	fmt.Println("Running gormless Example App")
 	example_app.Main()
-
 }
