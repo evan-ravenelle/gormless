@@ -2,13 +2,17 @@
 
 gormless is a lightweight database schema management tool for Go applications. Unlike traditional ORMs, gormless embraces SQL and provides a thin layer of abstraction to work with your database schema in a type-safe manner.
 
+gormless is a work-in-progress experiment that I took on to learn Go and teach myself something about database interactions.  It is not meant for production use (though it may be in the future) and has no release version (yet).  Please don't use this in your production code.
+
+gormless is also a word that means "lacking sense; foolish." Make of that what you will. ❤️
+
 ## Philosophy
 
 gormless was created as an "anti-ORM" solution, based on the belief that:
 
 - Database models and application models should be separate concerns
 - Tables should be first-class concepts, not relegated to data storage for business objects
-- SQL is a powerful language that developers should leverage, not hide from
+- SQL is a powerful language that developers should leverage, not hide from or abstract away
 - Schema migrations should be explicit and version-controlled
 - Type safety should not come at the cost of performance or flexibility
 
