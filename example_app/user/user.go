@@ -1,13 +1,13 @@
 package user
 
 import (
+	"database/sql"
 	"fmt"
 	"gormless/data"
 	"gormless/example_app/gormless/tables"
 )
 
-type UserRole struct {
-	dao      *data.DAO[UserRole]
+type Role struct {
 	RoleName string
 }
 
@@ -18,62 +18,97 @@ const (
 )
 
 type User struct {
-	dao       *data.DAO[User]
 	FirstName string
 	LastName  string
 	Email     string
 	Role      string
 }
 
-func (u *User) GetDAO(session data.ISession) {
-	dao := data.DAO[User]{
-		ISession: session,
-		Table:    data.Table{Name: "user"},
-	}
-	u.dao = &dao
+type DAO struct {
+	data.DAO[User]
+	RoleDAO *RoleDAO
 }
 
-func InsertUserRoles(session data.ISession) error {
-	adminRole := UserRole{
-		RoleName: RoleAdmin,
-	}
-	userRole := UserRole{
-		RoleName: RoleUser,
-	}
-	guestRole := UserRole{
-		RoleName: RoleGuest,
-	}
+type RoleDAO struct {
+	data.DAO[Role]
+}
 
-	adminDAO := adminRole.GetDAO(session)
-	err := adminDAO.Upsert()
-	if err != nil {
-		return err
+func NewUserDAO(session data.ISession) *DAO {
+	roleDAO := NewUserRoleDAO(session)
+
+	dao := DAO{
+		DAO: data.DAO[User]{
+			ISession: session,
+			Table:    tables.UserTable()(),
+		},
+		RoleDAO: roleDAO,
 	}
-	userDAO := userRole.GetDAO(session)
-	err = userDAO.Upsert()
-	if err != nil {
-		return err
-	}
-	guestDAO := guestRole.GetDAO(session)
-	err = guestDAO.Upsert()
+	return &dao
+}
+
+func NewUserRoleDAO(session data.ISession) *RoleDAO {
+	roleDAO := RoleDAO{data.DAO[Role]{
+		ISession: session,
+		Table:    tables.UserRoleTable()(),
+	}}
+	return &roleDAO
+}
+
+func (D DAO) UpsertUsers(rows ...map[string]any) error {
+	err := D.Upsert(rows...)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *UserRole) GetDAO(session data.ISession) *data.DAO[User] {
-	tableDef := tables.UserTable()
-	dao := data.DAO[User]{
-		ISession: session,
-		Table:    tableDef(),
+func InsertUserRoles(session data.ISession) error {
+	roles := map[string]Role{
+		"admin": {
+			RoleName: RoleAdmin,
+		},
+		"user": {
+			RoleName: RoleUser,
+		},
+		"guest": {
+			RoleName: RoleGuest,
+		},
 	}
-	return &dao
+
+	dao := NewUserRoleDAO(session)
+
+	dao.ToRowMap(roles)
+
+	err := dao.DAO.Upsert()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (user *User) Get() error {
+func (d *DAO) GetUsersByColumn(column string, value any) (*sql.Rows, error) {
 
-	return user.dao.Get()
+	rows, err := d.GetMany(column, value, false)
+	return rows, err
+}
+
+func (user *User) GetUserByEmail() (*sql.Row, error) {
+
+	column := "user_email"
+	row, err := user.GetUserByColumn(column, user.Email)
+	if err != nil {
+		return nil, err
+	}
+	return row, err
+}
+
+func (user *User) GetUsersByRole() (*[]User, error) {
+
+	rows, err := user.GetUsersByColumn("user_role", user.Role)
+	if err != nil {
+	}
+	return rows, err
 }
 
 func isValidRole(role string) bool {
@@ -85,7 +120,7 @@ func isValidRole(role string) bool {
 	}
 }
 
-func NewUser(session data.ISession, user_email string, user_first string, user_last string, user_role UserRole) (*User, error) {
+func NewUser(session data.ISession, user_email string, user_first string, user_last string, user_role Role) (*User, error) {
 
 	if !isValidRole(user_role.RoleName) {
 		return nil, fmt.Errorf("invalid role name")
@@ -98,17 +133,16 @@ func NewUser(session data.ISession, user_email string, user_first string, user_l
 		Role:      user_role.RoleName,
 	}
 
-	user.GetDAO(session)
-	user.dao.Table.Columns = &[]data.Column{
+	dao := NewUserDAO(session)
+	dao.Table.Columns = &[]data.Column{
 		{Name: "user_first", Type: &user.FirstName},
 		{Name: "user_last", Type: &user.LastName},
 		{Name: "user_email", Type: &user.Email, Indexed: true},
 		{Name: "user_role", Type: &user.Role},
 	}
-	err := user.dao.Upsert()
+	err := dao.Upsert()
 	if err != nil {
 		return nil, err
 	}
-
 	return user, nil
 }
